@@ -154,6 +154,15 @@ Environment variables (`.env`):
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | Token expiry (24h) |
 | `CORS_ORIGINS` | `http://localhost:5173` | Allowed CORS origins |
 
+### Create a SECRET_KEY
+```
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+or
+```
+openssl rand -hex 32
+```
+
 ## Extending Tournament Formats
 
 The service layer is designed for extensibility. To add new formats:
