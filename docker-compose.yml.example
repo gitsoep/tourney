@@ -7,7 +7,7 @@ services:
       - SECRET_KEY=change-this-to-secret-value
       - CORS_ORIGINS=http://tourney.example.com
     volumes:
-      - ./backend-data:/app
+      - ./backend-data/tournaments.db:/app/tournaments.db
 
   frontend:
     image: ghcr.io/gitsoep/tourney/frontend:latest
