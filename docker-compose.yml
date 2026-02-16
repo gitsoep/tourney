@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite://./tournaments.db
+      - SECRET_KEY=change-me-in-production
+      - CORS_ORIGINS=http://localhost:5173
+    volumes:
+      - backend-data:/app
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://backend:8000
+
+volumes:
+  backend-data:

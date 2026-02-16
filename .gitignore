@@ -1,0 +1,4 @@
+backend/.env
+backend/.env.local
+
+*/tournaments.db
