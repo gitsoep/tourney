@@ -12,6 +12,7 @@ import PlayersPage from './pages/PlayersPage';
 import StandingsPage from './pages/StandingsPage';
 import BracketPage from './pages/BracketPage';
 import SettingsPage from './pages/SettingsPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import PublicTournamentsPage from './pages/PublicTournamentsPage';
 import PublicTournamentPage from './pages/PublicTournamentPage';
@@ -41,6 +42,7 @@ function App() {
         <Route path="/standings" element={<StandingsPage />} />
         <Route path="/bracket" element={<BracketPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/change-password" element={<ChangePasswordPage />} />
         <Route
           path="/admin/users"
           element={
