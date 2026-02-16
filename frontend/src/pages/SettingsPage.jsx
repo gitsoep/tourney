@@ -93,7 +93,7 @@ export default function SettingsPage() {
           </Link>
         </div>
 
-        {/* App Info */}}
+        {/* App Info */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Application Info</h3>
           <dl className="space-y-4 text-sm">
