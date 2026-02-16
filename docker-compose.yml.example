@@ -1,0 +1,18 @@
+services:
+  backend:
+    image: ghcr.io/gitsoep/tourney/backend:latest
+    container_name: tourney-backend
+    environment:
+      - DATABASE_URL=sqlite:///app/tournaments.db
+      - SECRET_KEY=change-this-to-secret-value
+      - CORS_ORIGINS=http://tourney.example.com
+    volumes:
+      - ./backend-data:/app
+
+  frontend:
+    image: ghcr.io/gitsoep/tourney/frontend:latest
+    container_name: tourney-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
