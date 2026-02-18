@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Medal,
 } from 'lucide-react';
 import DartboardIcon from './DartboardIcon';
 import { useState } from 'react';
@@ -19,6 +20,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/tournaments', icon: Trophy, label: 'Tournaments' },
   { to: '/players', icon: Users, label: 'Players' },
+  { to: '/rankings', icon: Medal, label: 'Rankings' },
   { to: '/standings', icon: BarChart3, label: 'Standings' },
   { to: '/bracket', icon: GitBranch, label: 'Bracket' },
   { to: '/settings', icon: Settings, label: 'Settings' },

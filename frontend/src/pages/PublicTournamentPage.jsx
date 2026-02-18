@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Trophy, Target, BarChart3, GitBranch, Users } from 'lucide-react';
+import { Trophy, Target, BarChart3, GitBranch, Users, Star } from 'lucide-react';
 
 const publicApi = axios.create({ baseURL: '/api/public' });
 
@@ -14,6 +14,7 @@ export default function PublicTournamentPage() {
   const [pools, setPools] = useState([]);
   const [standings, setStandings] = useState([]);
   const [bracket, setBracket] = useState([]);
+  const [rankingPoints, setRankingPoints] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,6 +36,11 @@ export default function PublicTournamentPage() {
     publicApi.get(`/tournaments/${id}/pools`).then((r) => setPools(r.data));
     publicApi.get(`/tournaments/${id}/standings`).then((r) => setStandings(r.data));
     publicApi.get(`/tournaments/${id}/bracket`).then((r) => setBracket(r.data));
+    publicApi.get(`/tournaments/${id}/ranking-points`).then((r) => {
+      const pointsMap = {};
+      (r.data || []).forEach((e) => { pointsMap[e.player_id] = e.points; });
+      setRankingPoints(pointsMap);
+    }).catch(() => setRankingPoints({}));
   }, [tournament, id]);
 
   if (loading) {
@@ -328,7 +334,7 @@ export default function PublicTournamentPage() {
                           </div>
                           <div className="flex flex-col gap-4 justify-around flex-1">
                             {ms.map((match) => (
-                              <PublicMatchBox key={match.id} match={match} />
+                              <PublicMatchBox key={match.id} match={match} rankingPoints={rankingPoints} />
                             ))}
                           </div>
                         </div>
@@ -355,7 +361,7 @@ export default function PublicTournamentPage() {
                             </div>
                             <div className="flex flex-col gap-4 justify-around flex-1">
                               {ms.map((match) => (
-                                <PublicMatchBox key={match.id} match={match} />
+                                <PublicMatchBox key={match.id} match={match} rankingPoints={rankingPoints} />
                               ))}
                             </div>
                           </div>
@@ -372,8 +378,11 @@ export default function PublicTournamentPage() {
   );
 }
 
-function PublicMatchBox({ match }) {
+function PublicMatchBox({ match, rankingPoints = {} }) {
   const isPlayed = match.played === 1;
+  const hasPoints = Object.keys(rankingPoints).length > 0;
+  const p1Points = match.player1_id ? rankingPoints[match.player1_id] : undefined;
+  const p2Points = match.player2_id ? rankingPoints[match.player2_id] : undefined;
   return (
     <div
       className={`border rounded-lg p-3 min-w-[200px] text-sm ${
@@ -393,7 +402,15 @@ function PublicMatchBox({ match }) {
         <span className={`truncate ${isPlayed && match.winner_id === match.player1_id ? 'font-bold text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`}>
           {match.player1_name || (match.player1_id ? `Player ${match.player1_id}` : 'TBD')}
         </span>
-        <span className="font-mono text-xs ml-2 text-gray-700 dark:text-gray-300">{isPlayed ? match.player1_legs : ''}</span>
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          {hasPoints && p1Points !== undefined && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 rounded-full">
+              <Star className="w-2.5 h-2.5" />
+              {p1Points}
+            </span>
+          )}
+          <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{isPlayed ? match.player1_legs : ''}</span>
+        </div>
       </div>
       <div
         className={`flex items-center justify-between py-1 px-2 rounded ${
@@ -403,7 +420,15 @@ function PublicMatchBox({ match }) {
         <span className={`truncate ${isPlayed && match.winner_id === match.player2_id ? 'font-bold text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`}>
           {match.player2_name || (match.player2_id ? `Player ${match.player2_id}` : 'TBD')}
         </span>
-        <span className="font-mono text-xs ml-2 text-gray-700 dark:text-gray-300">{isPlayed ? match.player2_legs : ''}</span>
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          {hasPoints && p2Points !== undefined && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 rounded-full">
+              <Star className="w-2.5 h-2.5" />
+              {p2Points}
+            </span>
+          )}
+          <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{isPlayed ? match.player2_legs : ''}</span>
+        </div>
       </div>
     </div>
   );

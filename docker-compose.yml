@@ -4,11 +4,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///app/tournaments.db
+      - DATABASE_URL=sqlite:///app/tourney.db
       - SECRET_KEY=change-me-in-production
       - CORS_ORIGINS=http://localhost
-    # volumes:
-    #   - backend-data:/app
+    volumes:
+      - ./data/tourney.db:/app/tourney.db
 
   frontend:
     build: ./frontend

@@ -300,6 +300,18 @@ export default function TournamentDetailPage() {
                   <dd className="font-medium text-gray-900 dark:text-gray-100">{tournament.created_by_username}</dd>
                 </div>
               )}
+              <div className="flex justify-between">
+                <dt className="text-gray-500 dark:text-gray-400">Ranking</dt>
+                <dd className="font-medium text-gray-900 dark:text-gray-100">
+                  {tournament.ranking_name ? (
+                    <Link to={`/rankings/${tournament.ranking_id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      {tournament.ranking_name}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">None</span>
+                  )}
+                </dd>
+              </div>
             </dl>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
@@ -359,8 +371,8 @@ export default function TournamentDetailPage() {
       {tab === 'Players' && <TournamentPlayers tournamentId={id} onUpdate={load} />}
       {tab === 'Pools' && <PoolsView tournamentId={id} />}
       {tab === 'Standings' && <StandingsView tournamentId={id} />}
-      {tab === 'Bracket' && <BracketView tournamentId={id} />}
-      {tab === 'Match Entry' && <MatchEntry tournamentId={id} tournament={tournament} />}
+      {tab === 'Bracket' && <BracketView tournamentId={id} onUpdate={load} />}
+      {tab === 'Match Entry' && <MatchEntry tournamentId={id} tournament={tournament} onUpdate={load} />}
 
       {/* Reset Bracket Warning Modal */}
       {showResetWarning && (

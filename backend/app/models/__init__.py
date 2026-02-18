@@ -4,8 +4,10 @@ from app.models.tournament import Tournament, TournamentStatus
 from app.models.tournament_models import (
     TournamentPlayer, Pool, PoolMatch, BracketMatch
 )
+from app.models.ranking import Ranking, RankingEntry
 
 __all__ = [
     "User", "Player", "Tournament", "TournamentStatus",
     "TournamentPlayer", "Pool", "PoolMatch", "BracketMatch",
+    "Ranking", "RankingEntry",
 ]

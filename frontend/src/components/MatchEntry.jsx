@@ -33,7 +33,7 @@ function distributeToBoards(matches, numBoards) {
   return boards;
 }
 
-export default function MatchEntry({ tournamentId, tournament }) {
+export default function MatchEntry({ tournamentId, tournament, onUpdate }) {
   const [poolMatches, setPoolMatches] = useState([]);
   const [bracketMatches, setBracketMatches] = useState([]);
   const [scores, setScores] = useState({});
@@ -136,6 +136,7 @@ export default function MatchEntry({ tournamentId, tournament }) {
       });
       setScores((prev) => ({ ...prev, [matchId]: undefined }));
       load();
+      if (onUpdate) onUpdate();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error updating score');
     }

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.routers import auth, players, tournaments, users, public
+from app.routers import auth, players, tournaments, users, public, rankings
 
 # Check if DB file exists before creating tables
 _db_path = settings.DATABASE_URL.replace("sqlite:///", "")
@@ -38,6 +38,7 @@ app.include_router(players.router)
 app.include_router(tournaments.router)
 app.include_router(users.router)
 app.include_router(public.router)
+app.include_router(rankings.router)
 
 
 @app.get("/api/health")

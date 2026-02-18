@@ -16,6 +16,11 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import PublicTournamentsPage from './pages/PublicTournamentsPage';
 import PublicTournamentPage from './pages/PublicTournamentPage';
+import RankingsPage from './pages/RankingsPage';
+import RankingFormPage from './pages/RankingFormPage';
+import RankingDetailPage from './pages/RankingDetailPage';
+import PublicRankingsPage from './pages/PublicRankingsPage';
+import PublicRankingPage from './pages/PublicRankingPage';
 
 function App() {
   return (
@@ -23,6 +28,8 @@ function App() {
       {/* Public routes - no login required */}
       <Route path="/public/tournaments" element={<PublicTournamentsPage />} />
       <Route path="/public/tournaments/:id" element={<PublicTournamentPage />} />
+      <Route path="/public/rankings" element={<PublicRankingsPage />} />
+      <Route path="/public/rankings/:id" element={<PublicRankingPage />} />
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -39,6 +46,10 @@ function App() {
         <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
         <Route path="/tournaments/:id/edit" element={<TournamentFormPage />} />
         <Route path="/players" element={<PlayersPage />} />
+        <Route path="/rankings" element={<RankingsPage />} />
+        <Route path="/rankings/new" element={<RankingFormPage />} />
+        <Route path="/rankings/:id" element={<RankingDetailPage />} />
+        <Route path="/rankings/:id/edit" element={<RankingFormPage />} />
         <Route path="/standings" element={<StandingsPage />} />
         <Route path="/bracket" element={<BracketPage />} />
         <Route path="/settings" element={<SettingsPage />} />

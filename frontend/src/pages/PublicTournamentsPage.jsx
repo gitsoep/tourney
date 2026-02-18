@@ -88,7 +88,10 @@ export default function PublicTournamentsPage() {
           </div>
         )}
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex justify-center gap-4">
+          <Link to="/public/rankings" className="text-sm text-gray-400 hover:text-blue-600 transition-colors">
+            &larr; Rankings
+          </Link>
           <Link to="/login" className="text-sm text-gray-400 hover:text-blue-600 transition-colors">
             Admin login &rarr;
           </Link>

@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.player import Player
 from app.models.tournament import Tournament, TournamentStatus
 from app.models.tournament_models import TournamentPlayer, Pool, PoolMatch, BracketMatch
+from app.models.ranking import Ranking
 from app.schemas.tournament import (
     TournamentCreate, TournamentUpdate, TournamentOut,
     PoolOut, PoolMatchOut, StandingEntry, MatchScoreUpdate,
@@ -22,6 +23,21 @@ from app.services.bracket_service import (
 )
 
 router = APIRouter(prefix="/api/tournaments", tags=["tournaments"])
+
+
+def _enrich_tournament_out(out: TournamentOut, t: Tournament, db: Session) -> TournamentOut:
+    """Add computed fields to TournamentOut."""
+    out.player_count = (
+        db.query(TournamentPlayer)
+        .filter(TournamentPlayer.tournament_id == t.id)
+        .count()
+    )
+    if t.creator:
+        out.created_by_username = t.creator.username
+    if t.ranking_id:
+        ranking = db.query(Ranking).filter(Ranking.id == t.ranking_id).first()
+        out.ranking_name = ranking.name if ranking else None
+    return out
 
 
 def _get_tournament_with_access(tid: int, db: Session, user: User) -> Tournament:
@@ -77,14 +93,7 @@ def list_tournaments(db: Session = Depends(get_db), current_user: User = Depends
     result = []
     for t in tournaments:
         out = TournamentOut.model_validate(t)
-        out.player_count = (
-            db.query(TournamentPlayer)
-            .filter(TournamentPlayer.tournament_id == t.id)
-            .count()
-        )
-        if t.creator:
-            out.created_by_username = t.creator.username
-        result.append(out)
+        result.append(_enrich_tournament_out(out, t, db))
     return result
 
 
@@ -100,6 +109,9 @@ def create_tournament(
     out = TournamentOut.model_validate(tournament)
     out.player_count = 0
     out.created_by_username = current_user.username
+    if tournament.ranking_id:
+        ranking = db.query(Ranking).filter(Ranking.id == tournament.ranking_id).first()
+        out.ranking_name = ranking.name if ranking else None
     return out
 
 
@@ -111,12 +123,7 @@ def get_tournament(tid: int, db: Session = Depends(get_db), current_user: User =
     if current_user.role != "admin" and t.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
     out = TournamentOut.model_validate(t)
-    if t.creator:
-        out.created_by_username = t.creator.username
-    out.player_count = (
-        db.query(TournamentPlayer).filter(TournamentPlayer.tournament_id == t.id).count()
-    )
-    return out
+    return _enrich_tournament_out(out, t, db)
 
 
 @router.put("/{tid}", response_model=TournamentOut)
@@ -134,10 +141,7 @@ def update_tournament(
     db.commit()
     db.refresh(t)
     out = TournamentOut.model_validate(t)
-    out.player_count = (
-        db.query(TournamentPlayer).filter(TournamentPlayer.tournament_id == t.id).count()
-    )
-    return out
+    return _enrich_tournament_out(out, t, db)
 
 
 @router.delete("/{tid}", status_code=status.HTTP_204_NO_CONTENT)
@@ -369,6 +373,29 @@ def get_bracket(tid: int, db: Session = Depends(get_db), current_user: User = De
             player2_name=p2.name if p2 else None,
         ))
     return result
+
+
+@router.get("/{tid}/ranking-points")
+def get_ranking_points(tid: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Get ranking points per player for this tournament."""
+    from app.models.ranking import RankingEntry
+    t = _get_tournament_with_access(tid, db, current_user)
+    if not t.ranking_id:
+        return []
+    entries = (
+        db.query(RankingEntry)
+        .filter(RankingEntry.ranking_id == t.ranking_id, RankingEntry.tournament_id == tid)
+        .all()
+    )
+    return [
+        {
+            "player_id": e.player_id,
+            "player_name": e.player.name if e.player else None,
+            "placement": e.placement,
+            "points": e.points,
+        }
+        for e in entries
+    ]
 
 
 @router.put("/{tid}/bracket-matches/{match_id}/score", response_model=BracketMatchOut)

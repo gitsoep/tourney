@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.models.tournament import Tournament, TournamentStatus
 from app.models.tournament_models import BracketMatch
 from app.models.player import Player
+from app.services.ranking_service import recalculate_ranking_entries
 
 
 def _next_power_of_2(n: int) -> int:
@@ -356,17 +357,40 @@ def update_bracket_match_score(
 
     # WB losers are OUT — no advancement to loser bracket
 
-    # Check if WB or LB final is complete → tournament finished
-    if not match.next_winner_match_id:
-        tournament = match.tournament
-        unplayed = db.query(BracketMatch).filter(
-            BracketMatch.tournament_id == tournament.id,
-            BracketMatch.played != 1,
-            BracketMatch.player1_id.isnot(None),
-            BracketMatch.player2_id.isnot(None),
-        ).count()
-        if unplayed == 0:
+    # Check if all bracket matches are complete → tournament finished
+    tournament = match.tournament
+    all_bracket = db.query(BracketMatch).filter(
+        BracketMatch.tournament_id == tournament.id,
+    ).all()
+
+    # A match needs to be played if it has both players assigned and hasn't been played
+    unplayed = [
+        m for m in all_bracket
+        if m.played != 1 and m.player1_id is not None and m.player2_id is not None
+    ]
+
+    if len(unplayed) == 0:
+        # All playable matches are done — check there are no pending progressions
+        # (matches with only one player that still have feeder matches coming)
+        has_pending = False
+        for m in all_bracket:
+            if m.played != 1 and (m.player1_id is not None or m.player2_id is not None):
+                # This match has one player but not two — check if more feeders are expected
+                feeders = [f for f in all_bracket if f.next_winner_match_id == m.id]
+                unplayed_feeders = [f for f in feeders if f.played != 1]
+                if unplayed_feeders:
+                    has_pending = True
+                    break
+
+        if not has_pending:
             tournament.status = TournamentStatus.FINISHED
+
+            # Auto-calculate ranking points if tournament is linked to a ranking
+            if tournament.ranking_id:
+                try:
+                    recalculate_ranking_entries(db, tournament.ranking_id, tournament.id)
+                except (ValueError, Exception):
+                    pass  # Don't fail the match score update if ranking calc fails
 
     db.commit()
     db.refresh(match)

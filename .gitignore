@@ -6,6 +6,7 @@
 # Database files
 *.db
 *.sqlite
+data/
 *.sqlite3
 
 # Python

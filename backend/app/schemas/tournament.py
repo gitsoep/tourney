@@ -13,6 +13,7 @@ class TournamentCreate(BaseModel):
     best_of_legs_pool: int = 5
     best_of_legs_knockout: int = 7
     is_published: bool = False
+    ranking_id: Optional[int] = None
 
 
 class TournamentUpdate(BaseModel):
@@ -25,6 +26,7 @@ class TournamentUpdate(BaseModel):
     best_of_legs_pool: Optional[int] = None
     best_of_legs_knockout: Optional[int] = None
     is_published: Optional[bool] = None
+    ranking_id: Optional[int] = None
 
 
 class TournamentOut(BaseModel):
@@ -39,6 +41,8 @@ class TournamentOut(BaseModel):
     best_of_legs_knockout: int
     status: str
     is_published: bool = False
+    ranking_id: Optional[int] = None
+    ranking_name: Optional[str] = None
     created_by: int
     created_by_username: Optional[str] = None
     created_at: Optional[datetime] = None

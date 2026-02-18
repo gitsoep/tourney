@@ -6,10 +6,13 @@ from app.core.database import get_db
 from app.models.player import Player
 from app.models.tournament import Tournament
 from app.models.tournament_models import TournamentPlayer, Pool, PoolMatch, BracketMatch
+from app.models.ranking import Ranking
 from app.schemas.tournament import (
     TournamentOut, PoolOut, PoolMatchOut, StandingEntry, BracketMatchOut,
 )
+from app.schemas.ranking import RankingOut, RankingStandingEntry
 from app.services.pool_service import get_pool_standings
+from app.services.ranking_service import get_ranking_standings
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -38,6 +41,9 @@ def list_published_tournaments(db: Session = Depends(get_db)):
             .filter(TournamentPlayer.tournament_id == t.id)
             .count()
         )
+        if t.ranking_id:
+            ranking = db.query(Ranking).filter(Ranking.id == t.ranking_id).first()
+            out.ranking_name = ranking.name if ranking else None
         result.append(out)
     return result
 
@@ -49,6 +55,9 @@ def get_published_tournament(tid: int, db: Session = Depends(get_db)):
     out.player_count = (
         db.query(TournamentPlayer).filter(TournamentPlayer.tournament_id == t.id).count()
     )
+    if t.ranking_id:
+        ranking = db.query(Ranking).filter(Ranking.id == t.ranking_id).first()
+        out.ranking_name = ranking.name if ranking else None
     return out
 
 
@@ -139,3 +148,62 @@ def get_published_bracket(tid: int, db: Session = Depends(get_db)):
             player2_name=p2.name if p2 else None,
         ))
     return result
+
+
+@router.get("/tournaments/{tid}/ranking-points")
+def get_published_ranking_points(tid: int, db: Session = Depends(get_db)):
+    """Get ranking points per player for a published tournament."""
+    from app.models.ranking import RankingEntry
+    t = _get_published_tournament(tid, db)
+    if not t.ranking_id:
+        return []
+    entries = (
+        db.query(RankingEntry)
+        .filter(RankingEntry.ranking_id == t.ranking_id, RankingEntry.tournament_id == tid)
+        .all()
+    )
+    return [
+        {
+            "player_id": e.player_id,
+            "player_name": e.player.name if e.player else None,
+            "placement": e.placement,
+            "points": e.points,
+        }
+        for e in entries
+    ]
+
+
+# ── Public Rankings ──
+@router.get("/rankings", response_model=List[RankingOut])
+def list_public_rankings(db: Session = Depends(get_db)):
+    """List all rankings (public view)."""
+    rankings = db.query(Ranking).order_by(Ranking.created_at.desc()).all()
+    result = []
+    for r in rankings:
+        out = RankingOut.model_validate(r)
+        out.tournament_count = (
+            db.query(Tournament)
+            .filter(Tournament.ranking_id == r.id)
+            .count()
+        )
+        result.append(out)
+    return result
+
+
+@router.get("/rankings/{rid}", response_model=RankingOut)
+def get_public_ranking(rid: int, db: Session = Depends(get_db)):
+    r = db.query(Ranking).filter(Ranking.id == rid).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Ranking not found")
+    out = RankingOut.model_validate(r)
+    out.tournament_count = db.query(Tournament).filter(Tournament.ranking_id == r.id).count()
+    return out
+
+
+@router.get("/rankings/{rid}/standings", response_model=List[RankingStandingEntry])
+def get_public_ranking_standings(rid: int, db: Session = Depends(get_db)):
+    r = db.query(Ranking).filter(Ranking.id == rid).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Ranking not found")
+    return get_ranking_standings(db, rid)
+

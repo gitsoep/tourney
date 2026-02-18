@@ -87,6 +87,9 @@ export default function TournamentsPage() {
                   {user?.role === 'admin' && t.created_by_username && (
                     <p>👤 Created by {t.created_by_username}</p>
                   )}
+                  {t.ranking_name && (
+                    <p>🏅 {t.ranking_name}</p>
+                  )}
                 </div>
               </Link>
               <div className="px-6 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 flex gap-2">

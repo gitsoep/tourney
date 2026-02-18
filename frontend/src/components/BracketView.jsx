@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
-import { Trophy, Pencil, Check, X, Printer } from 'lucide-react';
+import { Trophy, Pencil, Check, X, Printer, Star } from 'lucide-react';
 
-export default function BracketView({ tournamentId }) {
+export default function BracketView({ tournamentId, onUpdate, isPublic }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingMatch, setEditingMatch] = useState(null);
   const [editScores, setEditScores] = useState({ player1_legs: 0, player2_legs: 0 });
+  const [rankingPoints, setRankingPoints] = useState({});
 
   const load = () => {
-    api.get(`/tournaments/${tournamentId}/bracket`).then((r) => {
+    const prefix = isPublic ? '/public' : '';
+    api.get(`${prefix}/tournaments/${tournamentId}/bracket`).then((r) => {
       setMatches(r.data);
       setLoading(false);
     });
+    api.get(`${prefix}/tournaments/${tournamentId}/ranking-points`).then((r) => {
+      const pointsMap = {};
+      (r.data || []).forEach((e) => { pointsMap[e.player_id] = e.points; });
+      setRankingPoints(pointsMap);
+    }).catch(() => setRankingPoints({}));
   };
 
   useEffect(load, [tournamentId]);
@@ -35,6 +42,7 @@ export default function BracketView({ tournamentId }) {
       await api.put(`/tournaments/${tournamentId}/bracket-matches/${matchId}/score`, editScores);
       setEditingMatch(null);
       load();
+      if (onUpdate) onUpdate();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error updating score');
     }
@@ -71,10 +79,14 @@ export default function BracketView({ tournamentId }) {
   const wbRounds = groupByRound(winnerMatches);
   const lbRounds = groupByRound(loserMatches);
 
+  const hasRankingPoints = Object.keys(rankingPoints).length > 0;
+
   const MatchBox = ({ match }) => {
     const isPlayed = match.played === 1;
     const isEditing = editingMatch === match.id;
     const hasBothPlayers = match.player1_id && match.player2_id;
+    const p1Points = match.player1_id ? rankingPoints[match.player1_id] : undefined;
+    const p2Points = match.player2_id ? rankingPoints[match.player2_id] : undefined;
 
     return (
       <div
@@ -124,18 +136,26 @@ export default function BracketView({ tournamentId }) {
           }`}>
             {match.player1_name || (match.player1_id ? `Player ${match.player1_id}` : 'TBD')}
           </span>
-          {isEditing ? (
-            <input
-              type="number"
-              min="0"
-              className="w-12 px-1 py-0.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-center text-xs focus:ring-2 focus:ring-blue-500 outline-none ml-2"
-              value={editScores.player1_legs}
-              onChange={(e) => setEditScores((s) => ({ ...s, player1_legs: parseInt(e.target.value) || 0 }))}
-              autoFocus
-            />
-          ) : (
-            <span className="font-mono text-xs ml-2 text-gray-700 dark:text-gray-300">{isPlayed ? match.player1_legs : ''}</span>
-          )}
+          <div className="flex items-center gap-1 ml-2 shrink-0">
+            {hasRankingPoints && p1Points !== undefined && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 rounded-full">
+                <Star className="w-2.5 h-2.5" />
+                {p1Points}
+              </span>
+            )}
+            {isEditing ? (
+              <input
+                type="number"
+                min="0"
+                className="w-12 px-1 py-0.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-center text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                value={editScores.player1_legs}
+                onChange={(e) => setEditScores((s) => ({ ...s, player1_legs: parseInt(e.target.value) || 0 }))}
+                autoFocus
+              />
+            ) : (
+              <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{isPlayed ? match.player1_legs : ''}</span>
+            )}
+          </div>
         </div>
         <div
           className={`flex items-center justify-between py-1 px-2 rounded ${
@@ -147,17 +167,25 @@ export default function BracketView({ tournamentId }) {
           }`}>
             {match.player2_name || (match.player2_id ? `Player ${match.player2_id}` : 'TBD')}
           </span>
-          {isEditing ? (
-            <input
-              type="number"
-              min="0"
-              className="w-12 px-1 py-0.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-center text-xs focus:ring-2 focus:ring-blue-500 outline-none ml-2"
-              value={editScores.player2_legs}
-              onChange={(e) => setEditScores((s) => ({ ...s, player2_legs: parseInt(e.target.value) || 0 }))}
-            />
-          ) : (
-            <span className="font-mono text-xs ml-2 text-gray-700 dark:text-gray-300">{isPlayed ? match.player2_legs : ''}</span>
-          )}
+          <div className="flex items-center gap-1 ml-2 shrink-0">
+            {hasRankingPoints && p2Points !== undefined && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-1.5 rounded-full">
+                <Star className="w-2.5 h-2.5" />
+                {p2Points}
+              </span>
+            )}
+            {isEditing ? (
+              <input
+                type="number"
+                min="0"
+                className="w-12 px-1 py-0.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-center text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                value={editScores.player2_legs}
+                onChange={(e) => setEditScores((s) => ({ ...s, player2_legs: parseInt(e.target.value) || 0 }))}
+              />
+            ) : (
+              <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{isPlayed ? match.player2_legs : ''}</span>
+            )}
+          </div>
         </div>
       </div>
     );

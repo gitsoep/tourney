@@ -16,11 +16,16 @@ export default function TournamentFormPage() {
     group_size: 4,
     best_of_legs_pool: 5,
     best_of_legs_knockout: 7,
+    ranking_id: '',
   });
+  const [rankings, setRankings] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Load available rankings
+    api.get('/rankings').then((r) => setRankings(r.data)).catch(() => {});
+
     if (isEdit) {
       api.get(`/tournaments/${id}`).then((r) => {
         setForm({
@@ -32,6 +37,7 @@ export default function TournamentFormPage() {
           group_size: r.data.group_size,
           best_of_legs_pool: r.data.best_of_legs_pool,
           best_of_legs_knockout: r.data.best_of_legs_knockout,
+          ranking_id: r.data.ranking_id || '',
         });
       });
     }
@@ -44,6 +50,8 @@ export default function TournamentFormPage() {
     try {
       const payload = { ...form };
       if (!payload.start_date) delete payload.start_date;
+      // Convert ranking_id to int or null
+      payload.ranking_id = payload.ranking_id ? parseInt(payload.ranking_id) : null;
       if (isEdit) {
         await api.put(`/tournaments/${id}`, payload);
         navigate(`/tournaments/${id}`);
@@ -66,6 +74,13 @@ export default function TournamentFormPage() {
     { name: 'group_size', label: 'Group Size (Pool Stage)', type: 'number', min: 2 },
     { name: 'best_of_legs_pool', label: 'Best of Legs (Pool)', type: 'number', min: 1 },
     { name: 'best_of_legs_knockout', label: 'Best of Legs (Knockout)', type: 'number', min: 1 },
+    {
+      name: 'ranking_id',
+      label: 'Counts for Ranking',
+      type: 'select',
+      options: [{ value: '', label: '— None —' }, ...rankings.map((r) => ({ value: String(r.id), label: r.name }))],
+      isObjectOptions: true,
+    },
   ];
 
   return (
@@ -89,9 +104,14 @@ export default function TournamentFormPage() {
                   onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                   className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  {f.options.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
+                  {f.isObjectOptions
+                    ? f.options.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))
+                    : f.options.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))
+                  }
                 </select>
               ) : (
                 <input

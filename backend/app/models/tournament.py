@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 import enum
 
 from app.core.database import Base
+# NOTE: Ranking import is deferred to avoid circular imports; relationship uses string ref.
 
 
 class TournamentStatus(str, enum.Enum):
@@ -30,11 +31,13 @@ class Tournament(Base):
         String(30), default=TournamentStatus.NOT_STARTED, nullable=False
     )
     is_published = Column(Boolean, default=False, nullable=False)
+    ranking_id = Column(Integer, ForeignKey("rankings.id", ondelete="SET NULL"), nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     creator = relationship("User")
+    ranking = relationship("Ranking", back_populates="tournaments")
     players = relationship("TournamentPlayer", back_populates="tournament", cascade="all, delete-orphan")
     pools = relationship("Pool", back_populates="tournament", cascade="all, delete-orphan")
     bracket_matches = relationship("BracketMatch", back_populates="tournament", cascade="all, delete-orphan")
